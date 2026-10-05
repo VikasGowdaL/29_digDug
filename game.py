@@ -22,9 +22,19 @@ def dirt_color(row):
 
 
 def on_enemy_popped(enemy, score):
-    """Called when an enemy is popped; add particles, bonus points, or a colour flash here."""
-    pass
+    """Called when an enemy is popped; return particles for a short burst."""
+    particles = []
 
+    for _ in range(12):
+        particles.append({
+            "x": enemy.cell[1] * TILE + TILE // 2,
+            "y": enemy.cell[0] * TILE + TILE // 2,
+            "vx": random.uniform(-2.5, 2.5),
+            "vy": random.uniform(-2.5, 2.5),
+            "life": 20,
+        })
+
+    return particles
 
 def enemy_speed_multiplier(level):
     """Return a speed multiplier for enemies at the given level, or None for the default speed."""
@@ -71,10 +81,12 @@ class Enemy:
 
 class Game:
     def __init__(self):
+        self.particles = []
         self.font = pygame.font.Font(None, 26)
         self.reset()
 
     def reset(self):
+        self.particles.clear()
         self.level, self.score, self.lives, self.state = 1, 0, 3, "play"
         self.start_level()
 
@@ -123,7 +135,7 @@ class Game:
             self.enemies.remove(enemy)
             self.score += 200 + 100 * (enemy.cell[0] // 4)
             self.pump_target = None
-            on_enemy_popped(enemy, self.score)
+            self.particles.extend(on_enemy_popped(enemy, self.score))
             if not self.enemies:
                 self.level += 1
                 self.start_level()
@@ -177,6 +189,13 @@ class Game:
             if enemy.cell == self.player and not enemy.locked:
                 self.hurt()
                 break
+            for particle in self.particles[:]:
+                particle["x"] += particle["vx"]
+                particle["y"] += particle["vy"]
+                particle["life"] -= 1
+
+                if particle["life"] <= 0:
+                    self.particles.remove(particle)
         if self.pump_target and (self.pump_target not in self.enemies or not self.pump_target.locked):
             self.pump_target = None
 
@@ -205,6 +224,13 @@ class Game:
         if self.pump_target:
             tx, ty = self.pump_target.cell[1] * TILE + TILE // 2, self.pump_target.cell[0] * TILE + TILE // 2
             pygame.draw.line(screen, (255, 255, 120), (px, py), (tx, ty), 3)
+            for particle in self.particles:
+                pygame.draw.circle(
+                screen,
+                (255, 220, 80),
+                (int(particle["x"]), int(particle["y"])),
+                3,
+            )
         hud = self.font.render(f"Score {self.score}  Lives {self.lives}  Level {self.level}  R = reset", True, (240, 240, 240))
         screen.blit(hud, (10, ROWS * TILE + 8))
         if self.state == "lose":
