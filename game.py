@@ -10,8 +10,15 @@ MOVE_DELAY, ENEMY_DELAY, PUMP_RANGE, DEFLATE_AFTER = 0.11, 0.35, 3, 1.5
 
 
 def dirt_color(row):
-    """Return an (r, g, b) colour for dirt in the given row, or None for the default gradient."""
-    pass
+    """Return an (r, g, b) colour for dirt in the given row, or None for the default."""
+    if row < ROWS // 4:
+        return (180, 120, 70)
+    elif row < ROWS // 2:
+        return (160, 100, 60)
+    elif row < 3 * ROWS // 4:
+        return (140, 85, 55)
+    else:
+        return (120, 70, 50)
 
 
 def on_enemy_popped(enemy, score):
