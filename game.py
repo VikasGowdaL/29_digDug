@@ -173,69 +173,106 @@ class Game:
         if path:
             enemy.cell = path[0]
 
-    def update(self, dt, keys):
-        if self.state != "play":
-            return
-        self.time += dt
-        self.move_timer -= dt
-        if self.move_timer <= 0:
-            for key, direction in DIRS.items():
-                if keys[key]:
-                    self.move_player(direction)
-                    self.move_timer = MOVE_DELAY
-                    break
-        for enemy in self.enemies[:]:
-            self.update_enemy(enemy, dt)
-            if enemy.cell == self.player and not enemy.locked:
-                self.hurt()
+def update(self, dt, keys):
+    if self.state != "play":
+        return
+
+    self.time += dt
+    self.move_timer -= dt
+
+    if self.move_timer <= 0:
+        for key, direction in DIRS.items():
+            if keys[key]:
+                self.move_player(direction)
+                self.move_timer = MOVE_DELAY
                 break
-            for particle in self.particles[:]:
-                particle["x"] += particle["vx"]
-                particle["y"] += particle["vy"]
-                particle["life"] -= 1
 
-                if particle["life"] <= 0:
-                    self.particles.remove(particle)
-        if self.pump_target and (self.pump_target not in self.enemies or not self.pump_target.locked):
-            self.pump_target = None
+    for enemy in self.enemies[:]:
+        self.update_enemy(enemy, dt)
 
-    def draw(self, screen):
-        screen.fill((30, 30, 60))
-        for r in range(ROWS):
-            for c in range(COLS):
-                rect = pygame.Rect(c * TILE, r * TILE, TILE, TILE)
-                if r == 0:
-                    pygame.draw.rect(screen, (90, 170, 230), rect)
-                elif self.grid[r][c]:
-                    shade = dirt_color(r) or (170 - r * 6, 110 - r * 4, 60)
-                    pygame.draw.rect(screen, shade, rect)
-                else:
-                    pygame.draw.rect(screen, (20, 12, 10), rect)
-        for enemy in self.enemies:
-            x, y = enemy.cell[1] * TILE + TILE // 2, enemy.cell[0] * TILE + TILE // 2
-            radius = 10 + enemy.stage * 4
-            color = (230, 230, 240) if enemy.ghost else (230, 70, 70)
-            pygame.draw.circle(screen, color, (x, y), radius)
-            pygame.draw.circle(screen, (255, 255, 255), (x - 4, y - 3), 3)
-            pygame.draw.circle(screen, (255, 255, 255), (x + 4, y - 3), 3)
-        px, py = self.player[1] * TILE + TILE // 2, self.player[0] * TILE + TILE // 2
-        pygame.draw.circle(screen, (250, 250, 250), (px, py), 12)
-        pygame.draw.rect(screen, (60, 120, 230), (px - 8, py - 12, 16, 8))
-        if self.pump_target:
-            tx, ty = self.pump_target.cell[1] * TILE + TILE // 2, self.pump_target.cell[0] * TILE + TILE // 2
-            pygame.draw.line(screen, (255, 255, 120), (px, py), (tx, ty), 3)
-            for particle in self.particles:
-                pygame.draw.circle(
-                screen,
-                (255, 220, 80),
-                (int(particle["x"]), int(particle["y"])),
-                3,
-            )
-        hud = self.font.render(f"Score {self.score}  Lives {self.lives}  Level {self.level}  R = reset", True, (240, 240, 240))
-        screen.blit(hud, (10, ROWS * TILE + 8))
-        if self.state == "lose":
-            label = self.font.render("GAME OVER - Press R", True, (255, 255, 120))
-            screen.blit(label, label.get_rect(center=(WIDTH // 2, HEIGHT // 2)))
+        if enemy.cell == self.player and not enemy.locked:
+            self.hurt()
+            break
+
+    for particle in self.particles[:]:
+        particle["x"] += particle["vx"]
+        particle["y"] += particle["vy"]
+        particle["life"] -= 1
+
+        if particle["life"] <= 0:
+            self.particles.remove(particle)
+
+    if self.pump_target and (
+        self.pump_target not in self.enemies
+        or not self.pump_target.locked
+    ):
+        self.pump_target = None
+
+def draw(self, screen):
+    screen.fill((30, 30, 60))
+
+    for r in range(ROWS):
+        for c in range(COLS):
+            rect = pygame.Rect(c * TILE, r * TILE, TILE, TILE)
+
+            if r == 0:
+                pygame.draw.rect(screen, (90, 170, 230), rect)
+            elif self.grid[r][c]:
+                shade = dirt_color(r) or (170 - r * 6, 110 - r * 4, 60)
+                pygame.draw.rect(screen, shade, rect)
+            else:
+                pygame.draw.rect(screen, (20, 12, 10), rect)
+
+    for enemy in self.enemies:
+        x = enemy.cell[1] * TILE + TILE // 2
+        y = enemy.cell[0] * TILE + TILE // 2
+        radius = 10 + enemy.stage * 4
+        color = (230, 230, 240) if enemy.ghost else (230, 70, 70)
+
+        pygame.draw.circle(screen, color, (x, y), radius)
+        pygame.draw.circle(screen, (255, 255, 255), (x - 4, y - 3), 3)
+        pygame.draw.circle(screen, (255, 255, 255), (x + 4, y - 3), 3)
+
+    px = self.player[1] * TILE + TILE // 2
+    py = self.player[0] * TILE + TILE // 2
+
+    pygame.draw.circle(screen, (250, 250, 250), (px, py), 12)
+    pygame.draw.rect(screen, (60, 120, 230), (px - 8, py - 12, 16, 8))
+
+    if self.pump_target:
+        tx = self.pump_target.cell[1] * TILE + TILE // 2
+        ty = self.pump_target.cell[0] * TILE + TILE // 2
+
+        pygame.draw.line(
+            screen,
+            (255, 255, 120),
+            (px, py),
+            (tx, ty),
+            3,
+        )
+
+    for particle in self.particles:
+        pygame.draw.circle(
+            screen,
+            (255, 220, 80),
+            (int(particle["x"]), int(particle["y"])),
+            3,
+        )
+
+    hud = self.font.render(
+        f"Score {self.score}  Lives {self.lives}  Level {self.level}  R = reset",
+        True,
+        (240, 240, 240),
+    )
+    screen.blit(hud, (10, ROWS * TILE + 8))
+
+    if self.state == "lose":
+        label = self.font.render(
+            "GAME OVER - Press R",
+            True,
+            (255, 255, 120),
+        )
+        screen.blit(label, label.get_rect(center=(WIDTH // 2, HEIGHT // 2)))
 
 
 def main():
